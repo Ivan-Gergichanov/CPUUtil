@@ -8,7 +8,7 @@ Utility for monitoring CPU on different OS
  run it with command "go run sensor" for default values
  
 ## Usage guide
-**Note: If you are getting issues try to run the terminal as administrator or super user. If probles persist, submit an Issue**\
+**Note: If you are getting issues try to run the terminal as administrator or super user. If problems persist, submit an Issue**\
  General usage is sensor --help --type=<CPU_Temp,CPU_Usage> --duration=<seconds> --format=<JSON,YAML> --unit=<C,F>\
  For help on how to use it use "go run sensor --help"\
  Sensor has two modes of operation denoted by --type<CPU_Temp,CPU_Usage>\
