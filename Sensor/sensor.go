@@ -20,8 +20,8 @@ func temperature(degrees, format string) string {
 		//get the time of the measurement
 		hour, minute, second := time.Now().Clock()
 		//Manipulate the output to make it easily usable
-		s := strings.Split(string(output), "\n")
-		s[1] = strings.TrimSpace(s[1])
+		outputString := string(output)
+		s := strings.Fields(outputString)
 		int1, _ := strconv.Atoi(s[1])
 		coreTemp := 0.00
 		//switch to calculate degrees as raw data is in Kelvin
@@ -112,4 +112,5 @@ func main() {
 			}
 		}
 	}
+
 }
