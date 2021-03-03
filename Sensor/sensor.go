@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	//"github.com/shirou/gopsutil/v3/host"
 )
 
 //function to get the current temperature of the CPU based on the reading of the BIOS
@@ -16,7 +17,10 @@ func temperature(degrees, format string) string {
 	switch runtime.GOOS {
 	case "windows":
 		//On Windows the app should call external process wmic /namespace:\\root\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature.
-		output, _ := exec.Command("cmd", "/c", "wmic /namespace:\\\\root\\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature").Output()
+		output, err := exec.Command("cmd", "/C", "wmic /namespace:\\\\root\\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature").Output()
+		if err != nil {
+			return "error"
+		}
 		//get the time of the measurement
 		hour, minute, second := time.Now().Clock()
 		//Manipulate the output to make it easily usable
@@ -38,12 +42,16 @@ func temperature(degrees, format string) string {
 		return fmt.Sprintf("measuredAt:%02d:%02d:%02d\nvalue:%.2f\nunit:%s", hour, minute, second, coreTemp, degrees)
 	//TODO Implement Linux and MacOs functionality
 	case "linux":
-		return ""
+		//value, _ := host.SensorsTemperatures()
+		//fmt.Println(value)
+		return "error"
 	case "darwin":
-		return ""
+		//value, _ := host.SensorsTemperatures()
+		//fmt.Println(value)
+		return "error"
+	default:
+		return "error"
 	}
-	//return error if something failed
-	return "error"
 }
 
 //function to show number of CPU cores, clock speed and CPU utilization
@@ -58,17 +66,21 @@ func usage(format string) string {
 		s := strings.Fields(outputString)
 		//returns different strings based on YAML/JSON command line argument
 		if format == "JSON" {
-			return fmt.Sprintf("{\"cores\":%s, \"frequency\":%sMhz, \"usedPercent\":%s\"}", s[5], s[4], s[3])
+			return fmt.Sprintf("{\"cores\":%s, \"frequency\":%sMhz, \"usedPercent\":%s%%\"}", s[5], s[4], s[3])
 		}
-		return fmt.Sprintf("cores:%s\nfrequency:%sMhz\nusedPercent:%s", s[5], s[4], s[3])
+		return fmt.Sprintf("cores:%s\nfrequency:%sMhz\nusedPercent:%s%%", s[5], s[4], s[3])
 	//TODO Implement Linux and MacOS
 	case "linux":
-		return ""
+		//value, _ := host.SensorsTemperatures()
+		//fmt.Println(value)
+		return "error"
 	case "darwin":
-		return ""
+		//value, _ := host.SensorsTemperatures()
+		//fmt.Println(value)
+		return "error"
+	default:
+		return "error"
 	}
-	//returns error if something failed
-	return "error"
 }
 func main() {
 	//set command line arguments
@@ -83,9 +95,10 @@ func main() {
 	FlagsCorrect := ((*operationType == "CPU_Temp") && (*degreeUnit == "C" || *degreeUnit == "F") && (*outputType == "JSON" || *outputType == "YAML") && (*tts > 0)) || (*operationType == "CPU_Usage")
 	// checks if the user used the help option anywhere in the command line. If they did, ignore all other options and print a usage message
 	if *help || !FlagsCorrect {
-		fmt.Println("Usage: sensor [--help] [--type=<CPU_Temp, CPU_Usage>] [--unit=<C, F>] [--duration=<seconds>] [--format=<JSON, YAML>].")
-		fmt.Println("Default is sensor --type=CPU_Temp --unit=C --duration=60 --format=JSON")
-		fmt.Println("Duration should be a positive number.")
+		//fmt.Println("Usage: sensor [--help] [--type=<CPU_Temp, CPU_Usage>] [--unit=<C, F>] [--duration=<seconds>] [--format=<JSON, YAML>].")
+		//fmt.Println("Default is sensor --type=CPU_Temp --unit=C --duration=60 --format=JSON")
+		//fmt.Println("Duration should be a positive number.")
+		flag.Usage()
 	} else {
 		switch *operationType {
 		case "CPU_Temp":
@@ -94,7 +107,12 @@ func main() {
 			If taking the temperature takes more time than the specified --duration, it will do it as soon as possible */
 			for {
 				start := time.Now()
-				fmt.Println(temperature(*degreeUnit, *outputType))
+				returnString := temperature(*degreeUnit, *outputType)
+				if returnString == "error" {
+					fmt.Println("Could not take temperature, or OS not supported(TODO Fix sensor function for Linux/Darwin). Exiting gracefully")
+					break
+				}
+				fmt.Println(returnString)
 				elapsed := time.Since(start)
 				durationTTS := time.Duration(*tts)*time.Second - elapsed
 				time.Sleep(durationTTS)
@@ -105,7 +123,12 @@ func main() {
 			If taking the temperature takes more time than the specified --duration, it will do it as soon as possible */
 			for {
 				start := time.Now()
-				fmt.Println(usage(*outputType))
+				returnString := usage(*outputType)
+				if returnString == "error" {
+					fmt.Println("Could not take core usage, or OS not supported(TODO Fix sensor function for Linux/Darwin). Exiting gracefully")
+					break
+				}
+				fmt.Println(returnString)
 				elapsed := time.Since(start)
 				durationTTS := time.Duration(*tts)*time.Second - elapsed
 				time.Sleep((durationTTS))
